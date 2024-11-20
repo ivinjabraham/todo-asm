@@ -19,6 +19,14 @@
         syscall
 .endm
 
+.macro bind sockfd, sockaddr, addrlen
+        movq $SYS_bind, %rax
+        movq \sockfd, %rdi
+        lea \sockaddr, %rsi
+        movq \addrlen, %rdx
+        syscall
+.endm
+
 .macro exit code
         movq $SYS_exit, %rax
         movq \code, %rdi
@@ -30,8 +38,13 @@
 .equ af_inet, 2
 .equ sock_stream, 1
 .equ tcp, 0
+.equ sin_family_offset, 0
+.equ in_port_t_offset, 16
+.equ in_addr_offset, 32
+.equ sockaddr_len, 64
 
 # syscall numbers
 .equ SYS_exit, 60
 .equ SYS_write, 1
 .equ SYS_socket, 41
+.equ SYS_bind, 49
