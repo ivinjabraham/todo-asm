@@ -37,6 +37,10 @@ _start:
         bind sock_fd(%rip), sockaddr(%rip), $sockaddr_len
         check_error
 
+        # Listen
+        listen sock_fd(%rip), $num_connections
+        check_error
+
         # Exit successfully
         exit $success
 

@@ -27,6 +27,13 @@
         syscall
 .endm
 
+.macro listen sockfd, num_con
+        movq $SYS_listen, %rax
+        movq \sockfd, %rdi
+        movq \num_con, %rsi
+        syscall
+.endm
+
 .macro exit code
         movq $SYS_exit, %rax
         movq \code, %rdi
@@ -42,9 +49,11 @@
 .equ in_port_t_offset, 16
 .equ in_addr_offset, 32
 .equ sockaddr_len, 64
+.equ num_connections, 1
 
 # syscall numbers
 .equ SYS_exit, 60
 .equ SYS_write, 1
 .equ SYS_socket, 41
 .equ SYS_bind, 49
+.equ SYS_listen, 50
