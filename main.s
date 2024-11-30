@@ -2,13 +2,9 @@
 
 .section .data
 
-bind_error_msg:
-        .asciz "Could not bind a socket.\n"
-        .set bind_error_msg_len, . - bind_error_msg
-
-startup_msg:
-        .asciz "Starting web server...\n"
-        .set startup_msg_len, . - startup_msg
+def_msg startup_msg, "INFO: Starting web server...\n"
+def_msg write_err_msg, "ERROR: Failed to write to STDOUT.\n"
+def_msg socket_err_msg, "ERROR: Improper socket configuration.\n"
 
 .section .bss
 
@@ -19,31 +15,34 @@ startup_msg:
 
 .globl _start
 _start:
-        # Print startup message
-        write $stdout, $startup_msg, $startup_msg_len
-        check_error
+        write_stdout $startup_msg, $startup_msg_len
+        check_error write_err
 
-        # Create a socket
         socket $af_inet, $sock_stream, $tcp
-        check_error
-        movq %rax, sock_fd(%rip)
+        check_error socket_err
+        movq %rax, sock_fd(%rip) # Save socket file descriptor
 
         # Set up sockaddr_in
         movw $af_inet, sockaddr+sin_family_offset(%rip)
-        movw $0xD204, sockaddr+in_port_t_offset(%rip)    # sin_port = 1234 in hex big endian
-        movl $0x0100007F, sockaddr+in_addr_offset(%rip)  # sin_addr = 127.0.0.1 in hex big endian
+        movw $0xD204, sockaddr+in_port_t_offset(%rip)
+        movl $0x0100007F, sockaddr+in_addr_offset(%rip)
 
-        # Bind the socket
         bind sock_fd(%rip), sockaddr(%rip), $sockaddr_len
-        check_error
+        check_error socket_err
 
-        # Listen
         listen sock_fd(%rip), $num_connections
-        check_error
+        check_error socket_err
+
+        accept sock_fd(%rip)
+        check_error socket_err
 
         # Exit successfully
         exit $success
 
-error_exit:
-        write $stdout, $bind_error_msg, $bind_error_msg_len
+write_err:
+        write_stdout $write_err_msg, $write_err_msg_len
+        exit %rax
+
+socket_err:
+        write_stdout $socket_err_msg, $socket_err_msg_len
         exit %rax
